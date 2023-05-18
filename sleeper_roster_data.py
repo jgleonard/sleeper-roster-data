@@ -1,44 +1,53 @@
 #!/usr/bin/env python3
 
-import requests
-import json
+"""Modules providing argument parsing, json support and html api support"""
 import argparse
+import json
+import requests
 
-# Hardcoded for 2023
-bye_weeks = {
-  "ARI": 14,
-  "ATL": 11,
-  "BAL": 13,
-  "BUF": 13,
-  "CAR": 7,
-  "CHI": 13,
-  "CIN": 7,
-  "CLE": 5,
-  "DAL": 7,
-  "DEN": 9,
-  "DET": 9,
-  "GB": 6,
-  "HOU": 7,
-  "IND": 11,
-  "JAX": 9,
-  "KC": 10,
-  "LV":  13,
-  "LAC": 5,
-  "LAR": 10,
-  "MIA": 10,
-  "MIN": 13,
-  "NE": 11,
-  "NO": 11,
-  "NYG": 13,
-  "NYJ": 7,
-  "PHI": 10,
-  "PIT": 6,
-  "SF": 9,
-  "SEA": 5,
-  "TB": 5,
-  "TEN": 7,
-  "WAS": 14,
-}
+
+def get_bye_weeks():
+  """Gets the bye weeks using the ESPN API
+
+  Args:
+    None
+
+  Returns:
+    Dict of bye weeks.
+  """
+
+  # Fetch current league year
+  url = "https://api.sleeper.app/v1/state/nfl"
+
+  response = requests.get(url,timeout=10)
+  if response.status_code != 200:
+    raise Exception(f"Error fetching season info: {response.status_code}")
+
+  year = int(json.loads(response.content)['season'])
+
+  bye_weeks = {}
+
+  # Fetch bye weeks from ESPN
+  for i in range(1, 37):
+    url = f"https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/{i}/schedule?season={year}"
+
+    response = requests.get(url,timeout=10)
+    if response.status_code != 200:
+      raise Exception(f"Error fetching team {i} bye week: {response.status_code}")
+
+    response_data = json.loads(response.content)
+
+    # Filter out non-teams from ESPN data
+    if not "byeWeek" in response_data:
+      continue
+
+    # ESPN uses a different abbreviation for Washington than Sleeper
+    if response_data['team']['abbreviation'] == "WSH":
+      bye_weeks['WAS'] =  int(response_data['byeWeek'])
+    else:
+      bye_weeks[response_data['team']['abbreviation']] =  int(response_data['byeWeek'])
+
+  return bye_weeks
 
 def get_user_id(username):
   """Gets the userid for a Sleeper fantasy football username
@@ -50,11 +59,11 @@ def get_user_id(username):
     Userid.
   """
 
-  url = "http://api.sleeper.app/v1/user/{}".format(username)
+  url = f"http://api.sleeper.app/v1/user/{username}"
 
-  response = requests.get(url)
+  response = requests.get(url,timeout=10)
   if response.status_code != 200:
-    raise Exception("Error fetching user: {}".format(response.status_code))
+    raise Exception(f"Error fetching user: {response.status_code}")
 
   return int(json.loads(response.content)['user_id'])
 
@@ -68,11 +77,11 @@ def get_rosters(league_id):
     A list of rosters.
   """
 
-  url = "https://api.sleeper.app/v1/league/{}/rosters".format(league_id)
+  url = f"https://api.sleeper.app/v1/league/{league_id}/rosters"
 
-  response = requests.get(url)
+  response = requests.get(url,timeout=10)
   if response.status_code != 200:
-    raise Exception("Error fetching rosters: {}".format(response.status_code))
+    raise Exception(f"Error fetching rosters: {response.status_code}")
 
   return json.loads(response.content)
 
@@ -104,12 +113,14 @@ def sort_roster(roster):
   # Pull source data in from Sleeper data file
   # origin: GET https://api.sleeper.app/v1/players/nfl
 
-  with open("player_data.json", "r") as f:
-    data = json.load(f)
+  with open("player_data.json", "r", encoding="utf-8") as file:
+    data = json.load(file)
 
   player_data = {}
   for key, value in data.items():
     player_data[key] = value
+
+  bye_weeks = get_bye_weeks()
 
   roster_data = {}
 
@@ -117,21 +128,24 @@ def sort_roster(roster):
   for playerid in players:
     player = player_data[playerid]
     roster_data[playerid] = player
-    roster_data[playerid]["bye"] = bye_weeks[player["team"]] 
+    roster_data[playerid]["bye"] = bye_weeks[player["team"]]
 
   # Sort roster by position and bye week
   return sorted(roster_data.items(), key=lambda x: (x[1]["position"], x[1]["bye"]))
 
 
 def main():
-  parser = argparse.ArgumentParser(description="Print out bye weeks for Sleeper team or dump roster data", 
+  """
+  Main function
+  """
+  parser = argparse.ArgumentParser(description="Print byes for Sleeper team or dump roster data",
                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter)
   parser.add_argument("league-id", type=int, help="Sleeper league ID")
   parser.add_argument("username", help="Sleeper username")
   parser.add_argument("-j", "--json", action="store_true", help="Output full roster data in JSON")
   args = parser.parse_args()
   config = vars(args)
-  
+
   league_id = config["league-id"]
   username = config["username"]
   userid = get_user_id(username)
@@ -140,7 +154,7 @@ def main():
   roster = get_roster_by_user(rosters, userid)
 
   if roster is None:
-    print("No roster found for userid {}".format(userid))
+    print(f"No roster found for userid {userid}")
     return
 
   sorted_roster = sort_roster(roster)
@@ -150,8 +164,8 @@ def main():
     print(json.dumps(sorted_roster))
   else:
     # Print out the sorted players, position and bye week
-    for id, player in sorted_roster:
-      print("{} | {} | {}".format(player["full_name"], player["position"], player["bye"]))
+    for player in sorted_roster:
+      print(f"{player[1]['full_name']} | {player[1]['position']} | {player[1]['bye']}")
 
 if __name__ == "__main__":
   main()
