@@ -15,7 +15,7 @@ curl -so player_data.json https://api.sleeper.app/v1/players/nfl
 * argpase
 
 ```
-√ sleeper-roster-data  % pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 
