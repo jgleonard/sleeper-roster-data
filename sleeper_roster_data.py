@@ -128,7 +128,12 @@ def sort_roster(roster):
   for playerid in players:
     player = player_data[playerid]
     roster_data[playerid] = player
-    roster_data[playerid]["bye"] = bye_weeks[player["team"]]
+
+    # Set bye week to 0 for players without a team
+    if player["team"] is None:
+      roster_data[playerid]["bye"] = 0
+    else:
+      roster_data[playerid]["bye"] = bye_weeks[player["team"]]
 
   # Sort roster by position and bye week
   return sorted(roster_data.items(), key=lambda x: (x[1]["position"], x[1]["bye"]))
