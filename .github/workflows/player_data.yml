@@ -1,0 +1,20 @@
+name: Fetch Player Data
+on:
+  schedule:
+    - cron: 0 4 * * 3
+  workflow_dispatch: {}
+
+jobs:
+  scheduled:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: denoland/setup-deno@v1
+        with:
+          deno-version: v1.x
+      - name: Check out repo
+        uses: actions/checkout@v3
+      - name: Fetch data
+        uses: githubocto/flat@v3
+        with:
+          http_url: https://api.sleeper.app/v1/players/nfl
+          downloaded_filename: player_data.json
