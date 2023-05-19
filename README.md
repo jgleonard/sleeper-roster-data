@@ -1,6 +1,9 @@
 # sleeper-roster-data
 Python Tool for pulling roster data from Sleeper and displaying bye weeks by position.
 
+# Flat
+Player data fetched weekly from Sleeper and available for use in the [Flat Viewer](https://flatgithub.com/jgleonard/sleeper-roster-data?filename=player_data.json).
+
 # Usage
 ```
 √ sleeper-roster-data  % python3 ./sleeper_roster_data.py -h
