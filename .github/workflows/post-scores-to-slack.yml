@@ -39,4 +39,5 @@ jobs:
     - name: Test with pytest
       env:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        SLACK_CHANNEL: ${{ secrets.SLACK_CHANNEL }}
       run: python3 sleeper_matchup_bot.py ${{ secrets.SLEEPER_LEAGUE }}

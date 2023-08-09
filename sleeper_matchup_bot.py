@@ -13,6 +13,7 @@ from slack_sdk.errors import SlackApiError
 # WebClient instantiates a client that can call API methods
 # When using Bolt, you can use either `app.client` or the `client` passed to listeners.
 client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
+channel_id = WebClient(token=os.environ.get("SLACK_CHANNEL"))
 logger = logging.getLogger(__name__)
 
 def get_week():
@@ -153,11 +154,6 @@ def main():
 
     # block_output.append({ "type": "section", "fields": elements })
     block_output.append({ "type": "context", "elements": elements })
-
-  # ID of channel you want to post message to
-  channel_id = "C05LRGMDMML"
-
-  print(block_output)
 
   try:
     # Call the conversations.list method using the WebClient
