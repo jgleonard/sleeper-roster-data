@@ -118,7 +118,7 @@ def main():
     print(f"No roster data found for league {league_id}")
     return
 
-  week = get_week()
+  week = get_week()-1
   scores = get_matchups(league_id,week)
 
   if scores is None:
