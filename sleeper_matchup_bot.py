@@ -13,7 +13,7 @@ from slack_sdk.errors import SlackApiError
 # WebClient instantiates a client that can call API methods
 # When using Bolt, you can use either `app.client` or the `client` passed to listeners.
 client = WebClient(token=os.environ.get("SLACK_BOT_TOKEN"))
-channel_id = WebClient(token=os.environ.get("SLACK_CHANNEL"))
+channel_id = os.environ.get("SLACK_CHANNEL")
 logger = logging.getLogger(__name__)
 
 def get_week():
